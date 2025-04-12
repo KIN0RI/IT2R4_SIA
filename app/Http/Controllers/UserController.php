@@ -2,54 +2,47 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\User;
 use App\Models\UserJob;
 use Illuminate\Http\Response;
-use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Traits\ApiResponser;
 use DB;
 
-Class UserController extends Controller {
-       
-       use ApiResponser;
+class UserController extends Controller
+{
+    use ApiResponser;
+    private $request;
 
-       private $request;
-       
-       public function __construct(Request $request){
+    public function __construct(Request $request)
+    {
         $this->request = $request;
     }
-    
-    public function getUsers(){
-        
 
-        $users = DB::connection('mysql')
-        ->select("Select * from tbluser");
-
-        //return response()->json($users, 200);
-
-    
+    public function getUsers()
+    {
+        $users = DB::connection('mysql')->select("Select * from tbluser");
         return $this->successResponse($users);
     }
 
     public function index()
     {
         $users = User::all();
-        
         return $this->successResponse($users);
     }
 
-    public function add(Request $request ){
+    public function addUser(Request $request)
+    {
         $rules = [
             'username' => 'required|max:20',
             'password' => 'required|max:20',
             'gender' => 'required|in:Male,Female',
-            'jobid' => 'required| numeric|min:1|not_in:0',
+            'jobid' => 'required|numeric|min:1|not_in:0',
         ];
+        $this->validate($request, $rules);
 
-        $this->validate($request,$rules);
-        // Validate if jobid exists in tbluserjob
         $userjob = UserJob::findOrFail($request->jobid);
-
         $user = User::create($request->all());
         return $this->successResponse($user, Response::HTTP_CREATED);
     }
@@ -58,41 +51,25 @@ Class UserController extends Controller {
     {
         $user = User::findOrFail($id);
         return $this->successResponse($user);
-    
-    
-        /*
-    $user = User::where('userid', $id)->first();
-        
-    if ($user) {
-        return $this->successResponse($user);
-    } else {
-        
-        return $this->errorResponse('User ID Does Not Exist', Response::HTTP_NOT_FOUND);
-    }
-    */
     }
 
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
-
         $rules = [
-        'username' => 'max:20',
-        'password' => 'max:20',
-        'gender' => 'in:Male,Female',
-        'jobid' => 'required| numeric|min:1|not_in:0',
+            'username' => 'max:20',
+            'password' => 'max:20',
+            'gender' => 'in:Male,Female',
+            'jobid' => 'numeric|min:1|not_in:0',
         ];
 
         $this->validate($request, $rules);
-        
         $userjob = UserJob::findOrFail($request->jobid);
         $user = User::findOrFail($id);
-
         $user->fill($request->all());
 
-        if ($user->isClean()){
+        if ($user->isClean()) {
             return $this->errorResponse('At least one value must change', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
         $user->save();
         return $this->successResponse($user);
     }
@@ -101,7 +78,9 @@ Class UserController extends Controller {
     {
         $user = User::findOrFail($id);
         $user->delete();
-        return $this->successResponse(['message' => 'User deleted successfully']);
 
+        return $this->successResponse('User deleted successfully');
     }
+
 }
+  
